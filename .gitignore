@@ -1,0 +1,38 @@
+# R
+.Rhistory
+.RData
+.Rproj.user
+*.Rproj
+
+# renv
+renv/library/
+renv/local/
+renv/staging/
+
+# Data files (tracked by sidecar metadata only)
+data/raw/*.csv
+data/raw/*.parquet
+data/processed/*.csv
+data/processed/*.parquet
+
+# Keep sidecar JSON metadata
+!data/**/*_meta.json
+
+# Artifacts (models, plots)
+artifacts/
+
+# Reports (generated)
+reports/*.html
+reports/*.pdf
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.log

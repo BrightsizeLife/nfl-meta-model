@@ -1,0 +1,32 @@
+Package: nflmetamodel
+Type: Package
+Title: NFL Meta-Model for Calibrated Win Probabilities
+Version: 0.1.0
+Authors@R: person("Derek", "Debellis", email = "derek@example.com", role = c("aut", "cre"))
+Description: A reproducible NFL meta-model that learns when market and model
+    probabilities are miscalibrated conditional on context, producing weekly
+    calibrated win probabilities with monitoring.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R (>= 4.0.0)
+Imports:
+    nflreadr,
+    dplyr,
+    data.table,
+    readr,
+    stringr,
+    lubridate,
+    purrr,
+    xgboost,
+    rsample,
+    yardstick,
+    ggplot2,
+    pROC,
+    jsonlite
+Suggests:
+    arrow,
+    meteostat,
+    renv
+RoxygenNote: 7.0.0
