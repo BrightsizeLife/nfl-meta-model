@@ -175,6 +175,53 @@ best_trial <- cv_results %>% arrange(cv_logloss) %>% dplyr::slice(1)
 cat(sprintf("\nBest trial: %d, CV logloss: %.4f\n", best_trial$trial, best_trial$cv_logloss))
 print(best_trial)
 
+# Generate timestamp early for OOF export
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S", tz = "UTC")
+
+# Generate out-of-fold predictions for edge analysis
+cat(sprintf("\n=== Generating OOF Predictions ===\n"))
+oof_preds <- rep(NA_real_, nrow(data))
+
+# Use test set as "OOF" (held-out temporal split)
+# Train on train_idx, predict on test_idx
+best_params_oof <- list(
+  objective = "binary:logistic",
+  eval_metric = "logloss",
+  max_depth = best_trial$max_depth,
+  eta = best_trial$eta,
+  min_child_weight = best_trial$min_child_weight,
+  subsample = best_trial$subsample,
+  colsample_bytree = best_trial$colsample_bytree,
+  lambda = best_trial$lambda,
+  seed = seed
+)
+
+dtrain_oof <- xgb.DMatrix(data = X[train_idx, ], label = y[train_idx])
+dtest_oof <- xgb.DMatrix(data = X[test_idx, ])
+
+model_oof <- xgb.train(
+  params = best_params_oof,
+  data = dtrain_oof,
+  nrounds = best_trial$best_iter,
+  verbose = 0
+)
+
+oof_preds[test_idx] <- predict(model_oof, dtest_oof)
+
+# Export OOF predictions
+oof_df <- data %>%
+  select(game_id, season, week) %>%
+  mutate(p_model_oof = oof_preds) %>%
+  filter(!is.na(p_model_oof))  # Only test set has OOF predictions
+
+oof_file <- file.path("data/processed", sprintf("p_model_oof_%s.csv", timestamp))
+write_csv(oof_df, oof_file)
+
+cat(sprintf("✓ OOF predictions: %d games (test set only)\n", nrow(oof_df)))
+cat(sprintf("  Distinct game_ids: %d\n", n_distinct(oof_df$game_id)))
+cat(sprintf("  Output: %s\n", oof_file))
+cat(sprintf("  Note: Training fold never saw its own labels (temporal split)\n"))
+
 # Train final model with best parameters
 best_params <- list(
   objective = "binary:logistic",
@@ -228,7 +275,6 @@ cat(sprintf("\n=== Top 10 Features ===\n"))
 print(head(importance, 10))
 
 # Save artifacts
-timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S", tz = "UTC")
 out_dir <- file.path("artifacts", timestamp, "xgb")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
