@@ -142,6 +142,20 @@ weather <- tibble(
   precip_mm = NA_real_
 )
 
+# Add rest day caps and first game flags
+cat("Adding rest day caps and first_game flags...\n")
+rest_home <- rest_home %>%
+  mutate(
+    rest_home_capped = pmin(rest_home, 14),
+    first_game_home = as.integer(rest_home > 100)
+  )
+
+rest_away <- rest_away %>%
+  mutate(
+    rest_away_capped = pmin(rest_away, 14),
+    first_game_away = as.integer(rest_away > 100)
+  )
+
 # Combine all features
 context_final <- context %>%
   select(game_id) %>%
@@ -164,7 +178,13 @@ week_range <- range(games$week, na.rm = TRUE)
 cat(sprintf("Week range: [%d, %d] (expect [1, 22])\n", week_range[1], week_range[2]))
 
 rest_range <- range(c(context_final$rest_home, context_final$rest_away), na.rm = TRUE)
-cat(sprintf("Rest range: [%d, %d] (expect [0, 14])\n", rest_range[1], rest_range[2]))
+cat(sprintf("Rest range (raw): [%d, %d]\n", rest_range[1], rest_range[2]))
+
+rest_capped_range <- range(c(context_final$rest_home_capped, context_final$rest_away_capped), na.rm = TRUE)
+cat(sprintf("Rest range (capped): [%d, %d] (expect [0, 14])\n", rest_capped_range[1], rest_capped_range[2]))
+
+n_first_games <- sum(context_final$first_game_home | context_final$first_game_away)
+cat(sprintf("First games of season: %d\n", n_first_games))
 
 elo_finite <- all(is.finite(context_final$elo_diff))
 cat(sprintf("Elo diff finite: %s\n", ifelse(elo_finite, "PASS", "FAIL")))

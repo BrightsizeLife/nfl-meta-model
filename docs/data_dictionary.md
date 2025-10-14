@@ -23,8 +23,12 @@
 |--------|------|-------------|---------------|
 | game_id | character | Unique game identifier (joins to games.csv) | "2018_01_ATL_PHI" |
 | home | integer | Home indicator (always 1) | 1 |
-| rest_home | integer | Days since home team's previous game | 4-260 (includes offseason) |
-| rest_away | integer | Days since away team's previous game | 4-260 (includes offseason) |
+| rest_home | integer | Days since home team's previous game (raw) | 4-260 (includes offseason) |
+| rest_home_capped | integer | Rest days capped at 14 for modeling | 4-14 |
+| first_game_home | integer | Home team's first game of season (1=yes, 0=no) | 0 or 1 |
+| rest_away | integer | Days since away team's previous game (raw) | 4-260 (includes offseason) |
+| rest_away_capped | integer | Rest days capped at 14 for modeling | 4-14 |
+| first_game_away | integer | Away team's first game of season (1=yes, 0=no) | 0 or 1 |
 | prev_margin_home | numeric | Home team's previous game scoring margin (+ = won by) | -40 to +40, NA for first game |
 | prev_margin_away | numeric | Away team's previous game scoring margin | -40 to +40, NA for first game |
 | elo_home | numeric | Home team's pre-game Elo rating | 1200-1800 |
@@ -42,16 +46,19 @@
   - 100% date parsing success
   - Zero missing values
 
-- **context.csv**: 1,942 rows (1:1 join with games.csv)
+- **context.csv**: 1,942 rows (1:1 join with games.csv), now with 16 columns
   - 16 NA in prev_margin_home (teams' first games)
   - 17 NA in prev_margin_away (teams' first games)
   - All weather fields NA (Meteostat integration pending)
+  - 96 first games of season flagged
 
-### Known Issues
-- **Rest days exceeds expected range**: Found [4, 260] vs expected [0, 14]
-  - Cause: Between-season gaps (offseason = ~260 days)
-  - Impact: Model should handle or clip to reasonable values
-  - Fix: Cap rest days at 14 or add "first_game_of_season" indicator
+### Feature Engineering (v1.1)
+- **Rest days capped**: Raw rest days (4-260) capped at 14 for modeling
+  - Preserves raw values for analysis
+  - Provides capped values for XGBoost training
+- **First game flags**: Binary indicators for season openers (96 games total)
+  - Captures distinct behavior patterns for season debuts
+  - Mitigates extreme rest day values from offseason
 
 ### Elo Methodology
 - Initial rating: 1500 for all teams
