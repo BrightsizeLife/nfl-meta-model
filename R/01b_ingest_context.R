@@ -157,16 +157,11 @@ rest_away <- rest_away %>%
   )
 
 # Combine all features
+# Note: Do NOT include season/week/spread/total here, as they will be joined from games.csv
+# This avoids duplicate columns during inner_join in downstream scripts
 context_final <- context %>%
-  select(game_id, season, week) %>%
-  left_join(
-    games %>% select(game_id, spread_close, total_close),
-    by = "game_id"
-  ) %>%
-  mutate(
-    home = 1L,
-    season_f = factor(season)  # Factor version for categorical modeling
-  ) %>%
+  select(game_id) %>%
+  mutate(home = 1L) %>%
   left_join(rest_home, by = "game_id") %>%
   left_join(rest_away, by = "game_id") %>%
   left_join(prev_margin_home, by = "game_id") %>%

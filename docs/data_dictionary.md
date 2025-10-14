@@ -19,15 +19,12 @@
 
 ## context.csv
 
+**Note**: Season, week, spread_close, and total_close are stored in games.csv and joined during model training to avoid duplication.
+
 | Column | Type | Description | Range/Example |
 |--------|------|-------------|---------------|
 | game_id | character | Unique game identifier (joins to games.csv) | "2018_01_ATL_PHI" |
-| season | integer | NFL season year | 2018-2024 |
-| week | integer | Week number within season | 1-22 (includes playoffs) |
-| spread_close | numeric | Closing spread (home perspective, negative = favorite) | -14.0 to +14.0 |
-| total_close | numeric | Closing over/under total | 35.0 to 60.0 |
 | home | integer | Home indicator (always 1) | 1 |
-| season_f | factor | Season as factor for categorical modeling | "2018" to "2024" |
 | rest_home | integer | Days since home team's previous game (raw) | 4-260 (includes offseason) |
 | rest_home_capped | integer | Rest days capped at 14 for modeling | 4-14 |
 | first_game_home | integer | Home team's first game of season (1=yes, 0=no) | 0 or 1 |
@@ -51,12 +48,12 @@
   - 100% date parsing success
   - Zero missing values
 
-- **context.csv**: 1,942 rows (1:1 join with games.csv), now with 21 columns (v1.2)
+- **context.csv**: 1,942 rows (1:1 join with games.csv), now with 16 columns (v1.2)
   - 16 NA in prev_margin_home (teams' first games)
   - 17 NA in prev_margin_away (teams' first games)
   - All weather fields NA (Meteostat integration pending)
   - 96 first games of season flagged
-  - Includes season/week for time-sliced evaluation
+  - Season/week/spread/total joined from games.csv to avoid duplication
 
 ### Feature Engineering (v1.1)
 - **Rest days capped**: Raw rest days (4-260) capped at 14 for modeling
