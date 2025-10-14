@@ -9,10 +9,9 @@ renv/library/
 renv/local/
 renv/staging/
 
-# Data files (tracked by sidecar metadata only)
-data/raw/*.csv
+# Data files - now tracked directly (all under 1MB)
+# Parquet files still excluded
 data/raw/*.parquet
-data/processed/*.csv
 data/processed/*.parquet
 
 # Keep sidecar JSON metadata
