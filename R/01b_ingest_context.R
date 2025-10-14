@@ -63,8 +63,8 @@ context <- games %>%
 # Compute rest days for each team
 cat("Computing rest days...\n")
 team_games <- bind_rows(
-  games %>% select(game_id, date, team = home_team, is_home = TRUE),
-  games %>% select(game_id, date, team = away_team, is_home = FALSE)
+  games %>% select(game_id, date, team = home_team) %>% mutate(is_home = TRUE),
+  games %>% select(game_id, date, team = away_team) %>% mutate(is_home = FALSE)
 ) %>%
   arrange(team, date) %>%
   group_by(team) %>%
@@ -75,8 +75,8 @@ team_games <- bind_rows(
   ungroup() %>%
   mutate(rest_days = ifelse(is.na(rest_days), 7L, rest_days))
 
-rest_home <- team_games %>% filter(!is_home) %>% select(game_id, rest_home = rest_days)
-rest_away <- team_games %>% filter(is_home) %>% select(game_id, rest_away = rest_days)
+rest_home <- team_games %>% filter(is_home) %>% select(game_id, rest_home = rest_days)
+rest_away <- team_games %>% filter(!is_home) %>% select(game_id, rest_away = rest_days)
 
 # Compute previous margins
 cat("Computing previous margins...\n")
