@@ -19,6 +19,13 @@ data/processed/*.parquet
 
 # Artifacts (models, plots)
 artifacts/
+# Exception: commit small, reviewable artifacts per artifacts/KEEP.md
+!artifacts/KEEP.md
+!artifacts/*/plots_small/
+!artifacts/*/plots_small/*.png
+!artifacts/*/eval/
+!artifacts/*/eval/*.csv
+!artifacts/*/model_metadata.json
 
 # Reports (generated)
 reports/*.html
