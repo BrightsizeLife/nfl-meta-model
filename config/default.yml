@@ -1,0 +1,47 @@
+# ==============================================================================
+# NFL Meta-Model Configuration
+# ==============================================================================
+
+# Data ingestion
+data:
+  seasons: [2018, 2019, 2020, 2021, 2022, 2023, 2024]
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+
+# Feature engineering
+features:
+  elo_seed: "five38"  # Seed source for initial Elo ratings
+  weather_sources: ["meteostat"]  # Future: add multiple sources
+
+# Model training
+model:
+  seed: 20251013
+  cv_method: "rolling_weekly"  # Options: rolling_weekly, expanding_window
+  test_size: 0.25  # Proportion of data for final test set
+
+  xgboost:
+    max_depth: [3, 5, 7, 9]
+    eta: [0.01, 0.05, 0.1, 0.3]
+    min_child_weight: [1, 3, 5]
+    subsample: [0.6, 0.8, 1.0]
+    colsample_bytree: [0.6, 0.8, 1.0]
+    lambda: [0.1, 1.0, 10.0]
+    n_trials: 50  # Hyperparameter search trials
+    early_stopping_rounds: 10
+
+# Edge analysis
+edge:
+  thresholds: [0.03, 0.05, 0.07]  # |edge| thresholds for flagging
+  market_baseline: "isotonic"  # Options: isotonic, logistic
+
+# Output paths
+output:
+  artifacts_dir: "artifacts"
+  reports_dir: "reports"
+  timestamp_format: "%Y%m%d_%H%M%S"  # UTC timestamps
+
+# Logging
+logging:
+  verbose: true
+  print_io_counts: true
+  print_elapsed: true

@@ -30,11 +30,13 @@ if (length(timestamp_match) == 0) {
   timestamp <- timestamp_match
 }
 
-# Create output directory
-out_dir <- file.path("artifacts", timestamp, "edge")
-dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+# Create output directories
+plots_dir <- file.path("artifacts", timestamp, "edge", "plots")
+plots_small_dir <- file.path("artifacts", timestamp, "edge", "plots_small")
+dir.create(plots_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(plots_small_dir, recursive = TRUE, showWarnings = FALSE)
 
-subtitle_text <- "Edge = P(model_oof) - P(book)"
+subtitle_text <- sprintf("Edge = P(model_oof) - P(book) | OOF n=%d", nrow(edges))
 
 # ==============================================================================
 # Plot 1: Edge lift by decile
@@ -61,8 +63,12 @@ p1 <- ggplot(edges_decile, aes(x = edge_decile, y = mean_loss_delta)) +
   theme_minimal() +
   theme(plot.title = element_text(face = "bold"))
 
-ggsave(file.path(out_dir, "edge_lift_by_decile.png"), p1, width = 8, height = 5, dpi = 150)
-cat(sprintf("✓ %s\n", file.path(out_dir, "edge_lift_by_decile.png")))
+# Save full-res
+ggsave(file.path(plots_dir, "edge_lift_by_decile.png"), p1, width = 8, height = 5, dpi = 150)
+# Save downscaled (max 1200px width)
+ggsave(file.path(plots_small_dir, "edge_lift_by_decile.png"), p1, width = 8, height = 5, dpi = 100)
+cat(sprintf("✓ Full: %s\n", file.path(plots_dir, "edge_lift_by_decile.png")))
+cat(sprintf("  Small: %s\n", file.path(plots_small_dir, "edge_lift_by_decile.png")))
 
 # ==============================================================================
 # Plot 2: Cumulative edge gain
@@ -86,8 +92,10 @@ p2 <- ggplot(edges_sorted, aes(x = rank, y = cumulative_gain)) +
   theme_minimal() +
   theme(plot.title = element_text(face = "bold"))
 
-ggsave(file.path(out_dir, "cumulative_edge_gain.png"), p2, width = 8, height = 5, dpi = 150)
-cat(sprintf("✓ %s\n", file.path(out_dir, "cumulative_edge_gain.png")))
+ggsave(file.path(plots_dir, "cumulative_edge_gain.png"), p2, width = 8, height = 5, dpi = 150)
+ggsave(file.path(plots_small_dir, "cumulative_edge_gain.png"), p2, width = 8, height = 5, dpi = 100)
+cat(sprintf("✓ Full: %s\n", file.path(plots_dir, "cumulative_edge_gain.png")))
+cat(sprintf("  Small: %s\n", file.path(plots_small_dir, "cumulative_edge_gain.png")))
 
 # ==============================================================================
 # Plot 3: Model vs Market Probability Scatter
@@ -105,8 +113,10 @@ p3 <- ggplot(edges, aes(x = prob_book, y = p_model_oof)) +
   theme_minimal() +
   theme(plot.title = element_text(face = "bold"))
 
-ggsave(file.path(out_dir, "model_vs_market_prob_scatter.png"), p3, width = 7, height = 7, dpi = 150)
-cat(sprintf("✓ %s\n", file.path(out_dir, "model_vs_market_prob_scatter.png")))
+ggsave(file.path(plots_dir, "model_vs_market_prob_scatter.png"), p3, width = 7, height = 7, dpi = 150)
+ggsave(file.path(plots_small_dir, "model_vs_market_prob_scatter.png"), p3, width = 7, height = 7, dpi = 100)
+cat(sprintf("✓ Full: %s\n", file.path(plots_dir, "model_vs_market_prob_scatter.png")))
+cat(sprintf("  Small: %s\n", file.path(plots_small_dir, "model_vs_market_prob_scatter.png")))
 
 # ==============================================================================
 # Plot 4: Delta Probability by Season
@@ -134,8 +144,10 @@ p4 <- ggplot(edges_season, aes(x = factor(season), y = mean_abs_edge)) +
   theme_minimal() +
   theme(plot.title = element_text(face = "bold"))
 
-ggsave(file.path(out_dir, "delta_prob_by_season.png"), p4, width = 8, height = 5, dpi = 150)
-cat(sprintf("✓ %s\n", file.path(out_dir, "delta_prob_by_season.png")))
+ggsave(file.path(plots_dir, "delta_prob_by_season.png"), p4, width = 8, height = 5, dpi = 150)
+ggsave(file.path(plots_small_dir, "delta_prob_by_season.png"), p4, width = 8, height = 5, dpi = 100)
+cat(sprintf("✓ Full: %s\n", file.path(plots_dir, "delta_prob_by_season.png")))
+cat(sprintf("  Small: %s\n", file.path(plots_small_dir, "delta_prob_by_season.png")))
 
 # ==============================================================================
 # Summary
@@ -144,6 +156,7 @@ elapsed <- difftime(Sys.time(), start_time, units = "secs")
 
 cat(sprintf("\n=== Edge Plots Generated ===\n"))
 cat(sprintf("  Input: %s (%d rows)\n", basename(edges_file), nrow(edges)))
-cat(sprintf("  Output: %s\n", out_dir))
-cat(sprintf("  Files: 4 PNG plots\n"))
+cat(sprintf("  Output (full): %s\n", plots_dir))
+cat(sprintf("  Output (small): %s\n", plots_small_dir))
+cat(sprintf("  Files: 4 PNG plots (2 versions each)\n"))
 cat(sprintf("  Elapsed: %.1f sec\n", elapsed))
