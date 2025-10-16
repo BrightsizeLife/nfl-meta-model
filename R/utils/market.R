@@ -207,3 +207,115 @@ load_market_model <- function(path) {
 
   return(model)
 }
+
+
+# ==============================================================================
+# Live Odds Utilities
+# ==============================================================================
+
+#' Convert American moneyline to implied probability
+#'
+#' @param ml_home Home team moneyline (American odds, e.g., -140)
+#' @param ml_away Away team moneyline (American odds, e.g., +120)
+#' @param devig Logical: apply de-vig adjustment (default TRUE)
+#' @return Home win probability (de-vigged if devig=TRUE)
+#'
+#' @examples
+#' prob_from_moneyline(-140, +120)  # Returns ~0.564
+#' prob_from_moneyline(-150, +130, devig = FALSE)  # Returns raw 0.600
+prob_from_moneyline <- function(ml_home, ml_away, devig = TRUE) {
+
+  # Convert American odds to implied probability
+  # Negative odds: prob = |odds| / (|odds| + 100)
+  # Positive odds: prob = 100 / (odds + 100)
+
+  prob_home_raw <- ifelse(ml_home < 0,
+                          abs(ml_home) / (abs(ml_home) + 100),
+                          100 / (ml_home + 100))
+
+  prob_away_raw <- ifelse(ml_away < 0,
+                          abs(ml_away) / (abs(ml_away) + 100),
+                          100 / (ml_away + 100))
+
+  if (!devig) {
+    return(prob_home_raw)
+  }
+
+  # De-vig using additive method
+  # Remove half the vig from each side
+  total_prob <- prob_home_raw + prob_away_raw
+  vig <- total_prob - 1.0
+
+  if (vig < 0) {
+    warning("Negative vig detected (arbitrage opportunity?). Returning raw probabilities.")
+    return(prob_home_raw)
+  }
+
+  prob_home_devig <- prob_home_raw - (vig / 2)
+  prob_away_devig <- prob_away_raw - (vig / 2)
+
+  # Sanity check: should sum to ~1.0
+  if (abs((prob_home_devig + prob_away_devig) - 1.0) > 0.01) {
+    warning(sprintf("De-vig probabilities don't sum to 1.0: %.3f",
+                   prob_home_devig + prob_away_devig))
+  }
+
+  # Clip to [0, 1]
+  prob_home_devig <- pmin(pmax(prob_home_devig, 0), 1)
+
+  return(prob_home_devig)
+}
+
+
+#' Convert spread to probability using isotonic model
+#'
+#' @param spread_home Home team spread (negative = favored)
+#' @param market_model Fitted market baseline model (isotonic)
+#' @return Home win probability
+#'
+#' @examples
+#' prob_from_spread(-3.5, market_model)  # Returns ~0.63
+prob_from_spread <- function(spread_home, market_model) {
+  market_prob(spread_home, market_model)
+}
+
+
+#' Choose best probability estimate from available odds
+#'
+#' Prefers moneyline over spread (if prefer_moneyline = TRUE in config).
+#' Returns NA if neither is available.
+#'
+#' @param row Single row data frame with columns: moneyline_home, moneyline_away, spread_home
+#' @param market_model Fitted market baseline model for spread conversion
+#' @param prefer_moneyline Logical: prefer moneyline over spread (default TRUE)
+#' @return Named list with p_book, source ("moneyline" or "spread")
+#'
+#' @examples
+#' row <- data.frame(moneyline_home = -140, moneyline_away = +120, spread_home = -2.5)
+#' choose_p_book(row, market_model)  # Returns list(p_book = 0.564, source = "moneyline")
+choose_p_book <- function(row, market_model, prefer_moneyline = TRUE) {
+
+  has_ml <- !is.na(row$moneyline_home) & !is.na(row$moneyline_away)
+  has_spread <- !is.na(row$spread_home)
+
+  if (!has_ml & !has_spread) {
+    return(list(p_book = NA_real_, source = NA_character_))
+  }
+
+  # Choose source based on preference
+  if (prefer_moneyline & has_ml) {
+    p_book <- prob_from_moneyline(row$moneyline_home, row$moneyline_away, devig = TRUE)
+    source <- "moneyline"
+  } else if (has_spread) {
+    p_book <- prob_from_spread(row$spread_home, market_model)
+    source <- "spread"
+  } else if (has_ml) {
+    # Fallback to moneyline if spread not available
+    p_book <- prob_from_moneyline(row$moneyline_home, row$moneyline_away, devig = TRUE)
+    source <- "moneyline"
+  } else {
+    return(list(p_book = NA_real_, source = NA_character_))
+  }
+
+  return(list(p_book = p_book, source = source))
+}
