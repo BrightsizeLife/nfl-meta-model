@@ -33,6 +33,13 @@ model:
 edge:
   thresholds: [0.03, 0.05, 0.07]  # |edge| thresholds for flagging
   market_baseline: "isotonic"  # Options: isotonic, logistic
+  edge_threshold: 0.05  # Default threshold for weekend picks
+
+# Live scoring
+live:
+  data_dir: "data/live"
+  books_preference: ["draftkings", "fanduel", "betmgm", "caesars", "bet365", "espn_bet"]
+  prefer_moneyline: true  # Use moneyline over spread when both available
 
 # Output paths
 output:
